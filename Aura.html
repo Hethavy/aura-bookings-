@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Aura Retreat Booking Calendar</title>
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --primary-green: #278143;
+      --primary-brown: #866543;
+      --accent-light: #f4ede4;
+      --accent-dark: #735237;
+      --circle-green: #278143;
+      --circle-brown: #866543;
+      --venue-green: #22b573;
+      --venue-orange: orange;
+      --venue-other: #2968b2;
+      --booking-date-red: #d80000;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 650px;
+      margin: 40px auto;
+      background: var(--accent-light);
+    }
+    h1 {
+      text-align: center;
+      color: var(--primary-green);
+      letter-spacing: 1px;
+      font-size: 2rem;
+      margin-bottom: 0.2em;
+    }
+    #summary-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 28px 0 12px 0;
+    }
+    #revenue-box {
+      display: flex;
+      align-items: center;
+      background: #e5f7ea;
+      border-radius: 8px;
+      padding: 12px 24px;
+      box-shadow: 0 1px 5px rgba(0,0,0,0.10);
+      font-size: 18px;
+      font-weight: 500;
+      color: var(--primary-brown);
+      border: 1.5px solid var(--primary-green);
+    }
+    #monthly-revenue-box {
+      display: flex;
+      align-items: center;
+      background: #e6ecfa;
+      border-radius: 8px;
+      padding: 12px 24px;
+      box-shadow: 0 1px 5px rgba(0,0,0,0.10);
+      font-size: 18px;
+      font-weight: 500;
+      color: #2968b2;
+      border: 1.5px solid #2968b2;
+      margin-left: 15px;
+    }
+    #top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 10px 0 16px 0;
+    }
+    #booked-count-circle {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--circle-green);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 21px;
+      font-weight: bold;
+      color: #fff;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.10);
+      margin-right: 12px;
+      border: 3px solid var(--circle-brown);
+      letter-spacing: 1px;
+    }
+    #user-info {
+      display: flex;
+      align-items: center;
+      font-size: 15px;
+      color: var(--primary-brown);
+    }
+    #signout-btn {
+      margin-left: 14px;
+      padding: 4px 12px;
+      background: var(--primary-brown);
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    #calendar {
+      background: #fff;
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(134,101,67,0.08);
+      border: 2px solid var(--primary-brown);
+    }
+    .fc-daygrid-day.booked-mago, .fc-daygrid-day.booked-aura, .fc-daygrid-day.booked-other {
+      position: relative;
+    }
+    .fc-daygrid-day.booked-mago {
+      background: var(--venue-orange) !important;
+      color: #fff !important;
+    }
+    .fc-daygrid-day.booked-aura {
+      background: var(--venue-green) !important;
+      color: #fff !important;
+    }
+    .fc-daygrid-day.booked-other {
+      background: var(--venue-other) !important;
+      color: #fff !important;
+    }
+    .fc-daygrid-event { display: none !important; }
+    .fc-daygrid-day:hover { filter: brightness(0.96); cursor: pointer; }
+    .booking-name-badge {
+      position: absolute;
+      top: 2px;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      font-size: 0.96em;
+      font-weight: bold;
+      z-index: 2;
+      color: #233;
+      background: rgba(255,255,255,0.85);
+      border-radius: 8px 8px 0 0;
+      padding: 2px 2px 0 2px;
+      pointer-events: none;
+      text-shadow: 0 1px 2px #fff;
+    }
+    .booking-price-badge {
+      position: absolute;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      font-size: 1.02em;
+      font-weight: 600;
+      z-index: 2;
+      color: #233;
+      background: rgba(255,255,255,0.85);
+      border-radius: 0 0 0 0;
+      padding: 0 2px 0 2px;
+      pointer-events: none;
+      bottom: 32px;
+    }
+    .booking-advance-badge {
+      position: absolute;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      font-size: 0.98em;
+      font-weight: 500;
+      z-index: 2;
+      color: #233;
+      background: rgba(255,255,255,0.85);
+      border-radius: 0 0 8px 8px;
+      padding: 0 2px 2px 2px;
+      pointer-events: none;
+      bottom: 2px;
+      line-height: 1.1;
+    }
+    .fc-daygrid-day.booked-mago .fc-daygrid-day-number,
+    .fc-daygrid-day.booked-aura .fc-daygrid-day-number,
+    .fc-daygrid-day.booked-other .fc-daygrid-day-number {
+      color: var(--booking-date-red) !important;
+      opacity: 1 !important;
+      font-weight: bold;
+      background: none !important;
+    }
+    .modal-bg {
+      display: none;
+      position: fixed;
+      z-index: 10;
+      left: 0; top: 0; width: 100vw; height: 100vh;
+      background: rgba(39,129,67,0.18);
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-bg.show {
+      display: flex;
+    }
+    .modal-content {
+      background: #fff;
+      padding: 34px 24px 22px 24px;
+      border-radius: 12px;
+      width: 350px;
+      text-align: left;
+      box-shadow: 0 2px 16px rgba(134,101,67,0.15);
+      border: 2px solid var(--primary-brown);
+    }
+    .modal-content h2 {
+      margin-bottom: 14px;
+      text-align: center;
+      color: var(--primary-green);
+    }
+    .modal-row.venue-row {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+    }
+    .modal-row.venue-row label {
+      align-self: center;
+    }
+    .venue-btn {
+      margin: 0;
+      padding: 10px 18px;
+      font-size: 15px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      color: #fff;
+      flex: 1 1 auto;
+    }
+    .btn-brown { background: var(--primary-brown); }
+    .btn-green { background: var(--primary-green); }
+    .btn-blue { background: var(--venue-other); }
+    .btn-cancel {
+      background: var(--accent-dark);
+      margin-left: 6px;
+    }
+    .btn-remove {
+      background: #c62828;
+      color: #fff;
+      margin-top: 12px;
+      padding: 10px 18px;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+      width: 100%;
+      display: block;
+    }
+    label { font-weight: 500; color: var(--primary-brown);}
+    .modal-row { margin-bottom: 14px; }
+    select, input[type="number"], input[type="text"] { width: 100px; }
+    #bookerName { width: 180px; }
+    .facilities-row { margin-bottom: 10px; }
+    .modal-facility {
+      margin-right: 10px;
+    }
+    #finalPrice {
+      font-weight: bold;
+      color: var(--primary-green);
+      font-size: 17px;
+      margin-left: 5px;
+    }
+    #finalPriceLabel {
+      font-weight: 600;
+      color: var(--primary-brown);
+      margin-right: 5px;
+    }
+    #bookingForm .modal-row.price-row {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      margin-bottom: 10px;
+    }
+    #bookingForm select {
+      font-size: 15px;
+      padding: 3px 3px;
+    }
+    #detailsModal .modal-content {
+      padding: 30px 24px;
+      width: 340px;
+    }
+    .detail-label { font-weight: bold; color: var(--primary-brown);}
+    .details-row { margin-bottom: 10px; }
+    .details-close { margin-top: 18px; width: 100%; }
+    /* Message Modal Styling */
+    .modal-row.message-row {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 8px;
+    }
+    #messageModal input, #messageModal textarea {
+      width: 95%;
+      margin-bottom: 8px;
+      font-size: 15px;
+      padding: 4px 6px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    #messageModal .venue-btn {
+      width: 100%;
+      margin-top: 6px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Aura Retreat Booking Calendar</h1>
+  <div id="summary-bar" style="display:none;">
+    <div style="display: flex;">
+      <div id="revenue-box">Total Revenue: <span id="total-revenue" style="margin-left:8px;">₹0</span></div>
+      <div id="monthly-revenue-box">Monthly Revenue: <span id="monthly-revenue" style="margin-left:8px;">₹0</span></div>
+    </div>
+    <div id="top-bar">
+      <div id="booked-count-circle">0</div>
+      <div id="user-info">
+        <span id="phone-display"></span>
+        <button id="signout-btn" style="display:none;">Sign Out</button>
+      </div>
+    </div>
+  </div>
+  <div id="calendar"></div>
+  <!-- Booking Modal -->
+  <div class="modal-bg" id="venueModal">
+    <div class="modal-content">
+      <h2 id="modalDate"></h2>
+      <div class="modal-row venue-row">
+        <label>Venue:</label>
+        <button class="venue-btn btn-brown" id="pickMago" type="button">Mago Stays</button>
+        <button class="venue-btn btn-green" id="pickAura" type="button">Aura Retreat</button>
+        <button class="venue-btn btn-blue" id="pickOther" type="button">Other</button>
+      </div>
+      <form id="bookingForm" style="display:none;">
+        <div class="modal-row">
+          <label for="bookerName">Booked By:</label>
+          <input type="text" id="bookerName" maxlength="50" placeholder="Enter Name" required>
+        </div>
+        <div class="modal-row">
+          <label for="bedrooms">B.R (1-5):</label>
+          <select id="bedrooms">
+            <option value="0">0</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+          </select>
+        </div>
+        <div class="modal-row">
+          <label for="largeBedrooms">Large B.R (0-2):</label>
+          <select id="largeBedrooms">
+            <option value="0">0</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+          </select>
+        </div>
+        <div class="modal-row facilities-row">
+          <label>Facilities:</label><br>
+          <label class="modal-facility">
+            <input type="checkbox" id="dorm"> Dorm
+          </label>
+          <label class="modal-facility">
+            <input type="checkbox" id="theatreDorm"> Theatre Dorm
+          </label>
+        </div>
+        <div class="modal-row">
+          <label for="lawn">Lawn (people):</label>
+          <select id="lawn">
+            <option value="0">None</option>
+            <option value="50">50</option>
+            <option value="75">75</option>
+            <option value="100">100</option>
+            <option value="125">125</option>
+            <option value="150">150</option>
+          </select>
+        </div>
+        <div class="modal-row">
+          <label for="banquet">Banquet Hall (people):</label>
+          <select id="banquet">
+            <option value="0">None</option>
+            <option value="50">50</option>
+            <option value="75">75</option>
+            <option value="100">100</option>
+            <option value="125">125</option>
+            <option value="150">150</option>
+          </select>
+        </div>
+        <div class="modal-row price-row">
+          <span id="finalPriceLabel">Final Price:</span>
+          <span id="finalPrice">₹0</span>
+        </div>
+        <div class="modal-row" style="display: flex; align-items: center;">
+          <label for="advanceReceived" style="margin-right:8px;">Advance Received:</label>
+          <input type="number" id="advanceReceived" placeholder="₹" min="0" step="1" style="width:110px;">
+        </div>
+        <div class="modal-row" style="text-align:center;">
+          <button class="venue-btn" type="submit" id="saveBooking">Save Booking</button>
+          <button class="venue-btn btn-cancel" type="button" id="cancelBooking">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <!-- Details View Modal -->
+  <div class="modal-bg" id="detailsModal">
+    <div class="modal-content">
+      <h2>Booking Details</h2>
+      <div class="details-row"><span class="detail-label">Date:</span> <span id="detailDate"></span></div>
+      <div class="details-row"><span class="detail-label">Booked By:</span> <span id="detailBooker"></span></div>
+      <div class="details-row"><span class="detail-label">Via:</span> <span id="detailVenue"></span></div>
+      <div class="details-row"><span class="detail-label">B.R:</span> <span id="detailBedrooms"></span></div>
+      <div class="details-row"><span class="detail-label">Large B.R:</span> <span id="detailLargeBedrooms"></span></div>
+      <div class="details-row"><span class="detail-label">Dorm:</span> <span id="detailDorm"></span></div>
+      <div class="details-row"><span class="detail-label">Theatre Dorm:</span> <span id="detailTheatreDorm"></span></div>
+      <div class="details-row"><span class="detail-label">Lawn:</span> <span id="detailLawn"></span></div>
+      <div class="details-row"><span class="detail-label">Banquet Hall:</span> <span id="detailBanquet"></span></div>
+      <div class="details-row"><span class="detail-label">Final Price (INR):</span> <span id="detailPrice"></span></div>
+      <div class="details-row" id="detailAdvanceRow"><span class="detail-label">Advance Received:</span> <span id="detailAdvance"></span></div>
+      <button class="venue-btn btn-cancel details-close" type="button" id="closeDetails">Close</button>
+      <button class="btn-remove" type="button" id="removeBooking" style="display:none;">Remove Booking</button>
+      <!-- Send Message Button -->
+      <button class="venue-btn btn-blue" type="button" id="openMessageModal" style="margin-top:10px;">Send Message</button>
+    </div>
+  </div>
+  <!-- Message Modal -->
+  <div class="modal-bg" id="messageModal">
+    <div class="modal-content">
+      <h2>Send WhatsApp Message</h2>
+      <form id="sendMessageForm">
+        <div class="modal-row message-row">
+          <label for="msgRecipientNumber">Recipient Number:</label>
+          <input type="tel" id="msgRecipientNumber" maxlength="15" required>
+        </div>
+        <div class="modal-row message-row">
+          <label for="msgText">Message:</label>
+          <textarea id="msgText" rows="4" required></textarea>
+        </div>
+        <button class="venue-btn btn-green" type="submit">Open WhatsApp</button>
+        <button class="venue-btn btn-cancel" type="button" id="closeMessageModal" style="margin-top:6px;">Cancel</button>
+      </form>
+    </div>
+  </div>
+  <!-- Sign-in Modal -->
+  <div class="modal-bg" id="signinModal">
+    <div class="modal-content">
+      <h2>Sign In</h2>
+      <form id="signinForm" autocomplete="off">
+        <label for="signin-phone">Enter your phone number:</label>
+        <input type="tel" id="signin-phone" placeholder="e.g. +919951168826" pattern="[0-9+]{10,15}" maxlength="15" required>
+        <div id="signin-error"></div>
+        <button type="submit">Sign In</button>
+      </form>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+  <script>
+    // ... existing code unchanged above ...
+    let bookingsByUser = {};
+    let activePhone = null;
+    const FULL_ACCESS_NUMBERS = [
+      '+919951168826',
+      '+918639750269',
+      '+918885555544'
+    ];
+    function loadFromStorage() {
+      activePhone = localStorage.getItem("activePhone") || null;
+      try {
+        bookingsByUser = JSON.parse(localStorage.getItem("bookingsByUser")) || {};
+      } catch {
+        bookingsByUser = {};
+      }
+    }
+    function saveToStorage() {
+      localStorage.setItem("activePhone", activePhone || "");
+      localStorage.setItem("bookingsByUser", JSON.stringify(bookingsByUser));
+    }
+    function isSignedIn() { return !!activePhone; }
+    function getUserBookings() {
+      if (!activePhone) return {};
+      if (isFullAccessUser()) {
+        let merged = {};
+        Object.values(bookingsByUser).forEach(userBks => {
+          Object.entries(userBks).forEach(([date, booking]) => {
+            merged[date] = Object.assign({}, booking, {__owner: true});
+          });
+        });
+        return merged;
+      }
+      return bookingsByUser[activePhone] || {};
+    }
+    function setUserBookings(bk) {
+      if (!activePhone) return;
+      bookingsByUser[activePhone] = bk;
+      saveToStorage();
+    }
+    function isFullAccessUser() {
+      return FULL_ACCESS_NUMBERS.includes(activePhone);
+    }
+    function findBookingOwner(dateStr) {
+      for (const phone in bookingsByUser) {
+        if (bookingsByUser[phone][dateStr]) return phone;
+      }
+      return null;
+    }
+    function removeBooking(dateStr) {
+      if (isFullAccessUser()) {
+        const owner = findBookingOwner(dateStr);
+        if (owner && bookingsByUser[owner][dateStr]) {
+          delete bookingsByUser[owner][dateStr];
+        }
+      } else {
+        if (bookingsByUser[activePhone] && bookingsByUser[activePhone][dateStr]) {
+          delete bookingsByUser[activePhone][dateStr];
+        }
+      }
+      saveToStorage();
+    }
+    const summaryBar = document.getElementById("summary-bar");
+    const revenueBox = document.getElementById("revenue-box");
+    const totalRevenue = document.getElementById("total-revenue");
+    const monthlyRevenue = document.getElementById("monthly-revenue");
+    const topBar = document.getElementById("top-bar");
+    const bookedCountCircle = document.getElementById("booked-count-circle");
+    const phoneDisplay = document.getElementById("phone-display");
+    const signoutBtn = document.getElementById("signout-btn");
+    const calendarDiv = document.getElementById("calendar");
+    const venueModal = document.getElementById("venueModal");
+    const modalDate = document.getElementById("modalDate");
+    const pickMagoBtn = document.getElementById("pickMago");
+    const pickAuraBtn = document.getElementById("pickAura");
+    const pickOtherBtn = document.getElementById("pickOther");
+    const bookingForm = document.getElementById("bookingForm");
+    const cancelBookingBtn = document.getElementById("cancelBooking");
+    const saveBookingBtn = document.getElementById("saveBooking");
+    const bookerNameInput = document.getElementById("bookerName");
+    const bedroomsInput = document.getElementById("bedrooms");
+    const largeBedroomsInput = document.getElementById("largeBedrooms");
+    const dormInput = document.getElementById("dorm");
+    const theatreDormInput = document.getElementById("theatreDorm");
+    const lawnInput = document.getElementById("lawn");
+    const banquetInput = document.getElementById("banquet");
+    const finalPriceSpan = document.getElementById("finalPrice");
+    const advanceReceivedInput = document.getElementById("advanceReceived");
+    const detailsModal = document.getElementById("detailsModal");
+    const detailDate = document.getElementById("detailDate");
+    const detailBooker = document.getElementById("detailBooker");
+    const detailVenue = document.getElementById("detailVenue");
+    const detailPrice = document.getElementById("detailPrice");
+    const detailBedrooms = document.getElementById("detailBedrooms");
+    const detailLargeBedrooms = document.getElementById("detailLargeBedrooms");
+    const detailDorm = document.getElementById("detailDorm");
+    const detailTheatreDorm = document.getElementById("detailTheatreDorm");
+    const detailLawn = document.getElementById("detailLawn");
+    const detailBanquet = document.getElementById("detailBanquet");
+    const detailAdvance = document.getElementById("detailAdvance");
+    const closeDetailsBtn = document.getElementById("closeDetails");
+    const removeBookingBtn = document.getElementById("removeBooking");
+    const openMessageModalBtn = document.getElementById("openMessageModal");
+    const messageModal = document.getElementById("messageModal");
+    const sendMessageForm = document.getElementById("sendMessageForm");
+    const msgRecipientNumber = document.getElementById("msgRecipientNumber");
+    const msgText = document.getElementById("msgText");
+    const closeMessageModalBtn = document.getElementById("closeMessageModal");
+    const signinModal = document.getElementById("signinModal");
+    const signinForm = document.getElementById("signinForm");
+    const signinPhone = document.getElementById("signin-phone");
+    const signinError = document.getElementById("signin-error");
+    const VENUES = {
+      mago: { name: "Mago Stays", color: "var(--venue-orange)" },
+      aura: { name: "Aura Retreat", color: "var(--venue-green)" },
+      other: { name: "Other", color: "var(--venue-other)" }
+    };
+    let selectedDate = null;
+    let selectedVenue = null;
+    function calculatePrice({
+      bedrooms = 0,
+      largeBedrooms = 0,
+      dorm = false,
+      theatreDorm = false,
+      lawn = 0,
+      banquet = 0
+    }) {
+      let price = 0;
+      price += Number(bedrooms) * 8500;
+      price += Number(largeBedrooms) * 12500;
+      if (dorm) price += 12500;
+      if (theatreDorm) price += 25000;
+      price += Number(lawn) * 750;
+      price += Number(banquet) * 1000;
+      return price;
+    }
+    // Custom badge rendering: includes name, price and advance (just number, no "Adv.")
+    function renderBookingBadges(cell, booking) {
+      // Remove previous badges
+      let nameBadge = cell.querySelector('.booking-name-badge');
+      if (nameBadge) nameBadge.remove();
+      let priceBadge = cell.querySelector('.booking-price-badge');
+      if (priceBadge) priceBadge.remove();
+      let advanceBadge = cell.querySelector('.booking-advance-badge');
+      if (advanceBadge) advanceBadge.remove();
+
+      // Name badge (top)
+      nameBadge = document.createElement("div");
+      nameBadge.className = "booking-name-badge";
+      nameBadge.textContent = booking.booker || "";
+      cell.prepend(nameBadge);
+
+      // Price badge (middle, only if price)
+      if (booking.price) {
+        priceBadge = document.createElement("div");
+        priceBadge.className = "booking-price-badge";
+        priceBadge.textContent = "₹" + booking.price;
+        cell.appendChild(priceBadge);
+      }
+
+      // Advance badge (bottom, only if nonzero)
+      if (booking.advance && booking.advance !== 0) {
+        advanceBadge = document.createElement("div");
+        advanceBadge.className = "booking-advance-badge";
+        advanceBadge.textContent = "₹" + booking.advance;
+        cell.appendChild(advanceBadge);
+      }
+    }
+    const calendar = new FullCalendar.Calendar(calendarDiv, {
+      initialView: 'dayGridMonth',
+      selectable: true,
+      select: function(info) {
+        if (!isSignedIn()) {
+          showSigninModal();
+          return;
+        }
+        const dateStr = info.startStr;
+        const userBookings = getUserBookings();
+        if (userBookings[dateStr]) {
+          showDetailsModal(dateStr);
+        } else {
+          showBookingModal(dateStr);
+        }
+      },
+      dayCellDidMount: function(arg) {
+        const dateStr = arg.date.toISOString().slice(0,10);
+        arg.el.classList.remove('booked-mago', 'booked-aura', 'booked-other');
+        if (!isSignedIn()) return;
+        const userBookings = getUserBookings();
+        if (userBookings[dateStr]) {
+          const venue = userBookings[dateStr].venue;
+          if (venue === 'mago') arg.el.classList.add('booked-mago');
+          if (venue === 'aura') arg.el.classList.add('booked-aura');
+          if (venue === 'other') arg.el.classList.add('booked-other');
+          renderBookingBadges(arg.el, userBookings[dateStr]);
+        } else {
+          // Remove any badges if not booked
+          let nameBadge = arg.el.querySelector('.booking-name-badge');
+          if (nameBadge) nameBadge.remove();
+          let priceBadge = arg.el.querySelector('.booking-price-badge');
+          if (priceBadge) priceBadge.remove();
+          let advanceBadge = arg.el.querySelector('.booking-advance-badge');
+          if (advanceBadge) advanceBadge.remove();
+        }
+      },
+      datesSet: function() { updateDayCellClasses(); },
+      eventDisplay: 'none',
+      headerToolbar: {
+        left: 'prev,next today',
+        center: 'title',
+        right: ''
+      }
+    });
+    function updateDayCellClasses() {
+      if (!isSignedIn()) return;
+      const userBookings = getUserBookings();
+      document.querySelectorAll('.fc-daygrid-day').forEach(cell => {
+        cell.classList.remove('booked-mago', 'booked-aura', 'booked-other');
+        const dateStr = cell.getAttribute('data-date');
+        if (dateStr && userBookings[dateStr]) {
+          const venue = userBookings[dateStr].venue;
+          if (venue === 'mago') cell.classList.add('booked-mago');
+          if (venue === 'aura') cell.classList.add('booked-aura');
+          if (venue === 'other') cell.classList.add('booked-other');
+          renderBookingBadges(cell, userBookings[dateStr]);
+        } else {
+          // Remove any badges if not booked
+          let nameBadge = cell.querySelector('.booking-name-badge');
+          if (nameBadge) nameBadge.remove();
+          let priceBadge = cell.querySelector('.booking-price-badge');
+          if (priceBadge) priceBadge.remove();
+          let advanceBadge = cell.querySelector('.booking-advance-badge');
+          if (advanceBadge) advanceBadge.remove();
+        }
+      });
+    }
+    function updateBookedCount() {
+      if (!isSignedIn()) return;
+      const userBookings = getUserBookings();
+      const count = Object.keys(userBookings).length;
+      bookedCountCircle.textContent = count;
+    }
+    function updateRevenue() {
+      if (!isSignedIn()) return;
+      const userBookings = getUserBookings();
+      let total = 0;
+      let currentMonthTotal = 0;
+      const now = new Date();
+      const currentMonth = now.getMonth();
+      const currentYear = now.getFullYear();
+      Object.entries(userBookings).forEach(([date, bk]) => {
+        const price = Number(bk.price) || 0;
+        total += price;
+        // Compute monthly revenue for displayed month
+        const d = new Date(date);
+        if (d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
+          currentMonthTotal += price;
+        }
+      });
+      totalRevenue.textContent = "₹" + total;
+      monthlyRevenue.textContent = "₹" + currentMonthTotal;
+    }
+    function updateTopBar() {
+      if (isSignedIn()) {
+        summaryBar.style.display = "";
+        phoneDisplay.textContent = "📱 " + activePhone;
+        signoutBtn.style.display = "";
+        updateBookedCount();
+        updateRevenue();
+      } else {
+        summaryBar.style.display = "none";
+      }
+    }
+    function showBookingModal(dateStr) {
+      selectedDate = dateStr;
+      selectedVenue = null;
+      modalDate.textContent = "Book " + new Date(dateStr).toDateString();
+      bookingForm.style.display = "none";
+      bookerNameInput.value = "";
+      bedroomsInput.value = "0";
+      largeBedroomsInput.value = "0";
+      dormInput.checked = false;
+      theatreDormInput.checked = false;
+      lawnInput.value = "0";
+      banquetInput.value = "0";
+      advanceReceivedInput.value = "";
+      finalPriceSpan.textContent = "₹0";
+      venueModal.classList.add("show");
+    }
+    function updateFinalPrice() {
+      const bedrooms = parseInt(bedroomsInput.value, 10);
+      const largeBedrooms = parseInt(largeBedroomsInput.value, 10);
+      const dorm = dormInput.checked;
+      const theatreDorm = theatreDormInput.checked;
+      const lawn = parseInt(lawnInput.value, 10);
+      const banquet = parseInt(banquetInput.value, 10);
+      const price = calculatePrice({
+        bedrooms, largeBedrooms, dorm, theatreDorm, lawn, banquet
+      });
+      finalPriceSpan.textContent = "₹" + price;
+      return price;
+    }
+    [bedroomsInput, largeBedroomsInput, dormInput, theatreDormInput, lawnInput, banquetInput].forEach(el => {
+      el.addEventListener('change', updateFinalPrice);
+    });
+    pickMagoBtn.onclick = function() {
+      selectedVenue = 'mago';
+      bookingForm.style.display = "";
+      saveBookingBtn.style.background = "var(--venue-orange)";
+      updateFinalPrice();
+    };
+    pickAuraBtn.onclick = function() {
+      selectedVenue = 'aura';
+      bookingForm.style.display = "";
+      saveBookingBtn.style.background = "var(--venue-green)";
+      updateFinalPrice();
+    };
+    pickOtherBtn.onclick = function() {
+      selectedVenue = 'other';
+      bookingForm.style.display = "";
+      saveBookingBtn.style.background = "var(--venue-other)";
+      updateFinalPrice();
+    };
+    bookingForm.onsubmit = function(e) {
+      e.preventDefault();
+      const booker = bookerNameInput.value.trim();
+      const bedrooms = parseInt(bedroomsInput.value, 10);
+      const largeBedrooms = parseInt(largeBedroomsInput.value, 10);
+      const dorm = dormInput.checked;
+      const theatreDorm = theatreDormInput.checked;
+      const lawn = parseInt(lawnInput.value, 10);
+      const banquet = parseInt(banquetInput.value, 10);
+      const advance = Number(advanceReceivedInput.value) || 0;
+      if (!booker) {
+        alert("Please enter the name of the person who booked.");
+        bookerNameInput.focus();
+        return;
+      }
+      if (bedrooms < 0 || bedrooms > 5) {
+        alert("B.R (bedrooms) must be between 0 and 5.");
+        bedroomsInput.focus();
+        return;
+      }
+      if (largeBedrooms < 0 || largeBedrooms > 2) {
+        alert("Large B.R must be between 0 and 2.");
+        largeBedroomsInput.focus();
+        return;
+      }
+      const price = calculatePrice({
+        bedrooms, largeBedrooms, dorm, theatreDorm, lawn, banquet
+      });
+      const userBookings = getUserBookings();
+      userBookings[selectedDate] = {
+        booker,
+        venue: selectedVenue,
+        bedrooms,
+        largeBedrooms,
+        dorm,
+        theatreDorm,
+        lawn,
+        banquet,
+        price,
+        advance
+      };
+      if (!isFullAccessUser()) {
+        setUserBookings(userBookings);
+      } else {
+        let owner = findBookingOwner(selectedDate);
+        if (owner) {
+          bookingsByUser[owner][selectedDate] = userBookings[selectedDate];
+        } else {
+          setUserBookings(userBookings);
+        }
+        saveToStorage();
+      }
+      calendar.unselect();
+      updateDayCellClasses();
+      updateBookedCount();
+      updateRevenue();
+      venueModal.classList.remove("show");
+    };
+    cancelBookingBtn.onclick = function() {
+      venueModal.classList.remove("show");
+    };
+    function showDetailsModal(dateStr) {
+      const userBookings = getUserBookings();
+      let booking = userBookings[dateStr];
+      let ownerPhone = findBookingOwner(dateStr);
+      detailDate.textContent = new Date(dateStr).toDateString();
+      detailBooker.textContent = booking.booker || "";
+      detailVenue.textContent = VENUES[booking.venue]?.name || booking.venue || "";
+      detailBedrooms.textContent = booking.bedrooms || 0;
+      detailLargeBedrooms.textContent = booking.largeBedrooms || 0;
+      detailDorm.textContent = booking.dorm ? "Yes" : "No";
+      detailTheatreDorm.textContent = booking.theatreDorm ? "Yes" : "No";
+      detailLawn.textContent = booking.lawn && booking.lawn !== 0 ? booking.lawn : "None";
+      detailBanquet.textContent = booking.banquet && booking.banquet !== 0 ? booking.banquet : "None";
+      detailPrice.textContent = "₹" + (booking.price || 0);
+      detailAdvance.textContent = "₹" + (booking.advance || 0);
+
+      if (isFullAccessUser() || ownerPhone === activePhone) {
+        removeBookingBtn.style.display = "";
+        removeBookingBtn.onclick = function() {
+          if (confirm("Are you sure you want to remove this booking?")) {
+            removeBooking(dateStr);
+            detailsModal.classList.remove("show");
+            calendar.render();
+            updateDayCellClasses();
+            updateBookedCount();
+            updateRevenue();
+          }
+        };
+        // Set default message phone number to booking.booker if it's a phone, else blank
+        openMessageModalBtn.style.display = "";
+        openMessageModalBtn.onclick = function() {
+          // Try to find a phone number in booking.booker
+          let phoneCandidate = "";
+          if (booking.booker && /^[+0-9]{10,15}$/.test(booking.booker.replace(/\s+/g,''))) {
+            phoneCandidate = booking.booker.replace(/\s+/g,'');
+          }
+          msgRecipientNumber.value = phoneCandidate;
+          msgText.value = "";
+          messageModal.classList.add("show");
+        };
+      } else {
+        removeBookingBtn.style.display = "none";
+        removeBookingBtn.onclick = null;
+        openMessageModalBtn.style.display = "none";
+      }
+      detailsModal.classList.add("show");
+    }
+    closeDetailsBtn.onclick = function() {
+      detailsModal.classList.remove("show");
+    };
+    // WhatsApp Message Modal logic
+    sendMessageForm.onsubmit = function(e) {
+      e.preventDefault();
+      let number = msgRecipientNumber.value.trim();
+      let message = msgText.value.trim();
+      if (!/^[+0-9]{10,15}$/.test(number.replace(/\s+/g,''))) {
+        alert("Please enter a valid phone number (10-15 digits, allow +).");
+        msgRecipientNumber.focus();
+        return;
+      }
+      // Remove + for wa.me link
+      number = number.replace(/^\+/, '');
+      let url = `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
+      window.open(url, '_blank');
+      messageModal.classList.remove("show");
+    };
+    closeMessageModalBtn.onclick = function() {
+      messageModal.classList.remove("show");
+    };
+    window.onclick = function(event) {
+      if (event.target === venueModal) venueModal.classList.remove("show");
+      if (event.target === detailsModal) detailsModal.classList.remove("show");
+      if (event.target === signinModal) signinModal.classList.remove("show");
+      if (event.target === messageModal) messageModal.classList.remove("show");
+    };
+    function showSigninModal() {
+      signinModal.classList.add("show");
+      signinError.style.display = "none";
+      signinPhone.value = "";
+      signinPhone.focus();
+    }
+    function doSignIn(phone) {
+      activePhone = phone;
+      if (!bookingsByUser[activePhone]) bookingsByUser[activePhone] = {};
+      saveToStorage();
+      signinModal.classList.remove("show");
+      updateTopBar();
+      calendar.render();
+      updateDayCellClasses();
+      updateBookedCount();
+      updateRevenue();
+    }
+    signinForm.onsubmit = function(e) {
+      e.preventDefault();
+      const phone = signinPhone.value.trim();
+      if (!/^[0-9+]{10,15}$/.test(phone)) {
+        signinError.textContent = "Please enter a valid phone number (10-15 digits, allow +).";
+        signinError.style.display = "block";
+        signinPhone.focus();
+        return;
+      }
+      doSignIn(phone);
+    };
+    signoutBtn.onclick = function() {
+      activePhone = null;
+      saveToStorage();
+      updateTopBar();
+      calendar.render();
+      updateDayCellClasses();
+    };
+    loadFromStorage();
+    if (!isSignedIn()) {
+      showSigninModal();
+    } else {
+      updateTopBar();
+    }
+    calendar.render();
+    updateDayCellClasses();
+    updateBookedCount();
+    updateRevenue();
+  </script>
+</body>
+</html>
